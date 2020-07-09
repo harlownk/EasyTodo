@@ -202,7 +202,7 @@ public class AuthService {
      * @param jwtTokenString
      * @return
      */
-    public boolean verifyToken(String jwtTokenString, String username) {
+    public boolean verifyToken(String jwtTokenString) {
         try {
             SignedJWT signedJWT = SignedJWT.parse(jwtTokenString);
             JWSVerifier verifier = new MACVerifier(signingSecret);
@@ -212,10 +212,6 @@ public class AuthService {
 
             JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
 
-            if (!username.equals(claims.getClaim("username"))) {
-                return false;
-            }
-
             Date expiration = claims.getExpirationTime();
             if (expiration.before(new Date())) {
                 return false;
@@ -224,6 +220,16 @@ public class AuthService {
             return false;
         }
         return true;
+    }
+
+    public JWTClaimsSet getClaimsFromAuthToken(String authToken) {
+        try {
+            SignedJWT signedJWT = SignedJWT.parse(authToken);
+            JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
+            return claims;
+        } catch (ParseException e) {
+            return null;
+        }
     }
 
     /**

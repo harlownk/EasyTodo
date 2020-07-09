@@ -4,13 +4,13 @@ import java.util.Date;
 
 public class Task {
 
-    private String taskId;
+    private long taskId;
     private String taskDescription;
     private boolean completed;
     private long timeCreated;
     private long timeDue;
 
-    public void setTaskId(String taskId) {
+    public void setTaskId(long taskId) {
         this.taskId = taskId;
     }
 
@@ -30,7 +30,7 @@ public class Task {
         this.timeDue = dueTime;
     }
 
-    public String getTaskId() {
+    public long getTaskId() {
         return taskId;
     }
 
@@ -38,7 +38,7 @@ public class Task {
         return taskDescription;
     }
 
-    public boolean setCompleted() {
+    public boolean getCompleted() {
         return completed;
     }
 
