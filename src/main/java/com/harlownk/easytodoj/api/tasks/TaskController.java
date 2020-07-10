@@ -5,6 +5,7 @@ import com.harlownk.easytodoj.api.services.AuthService;
 import com.harlownk.easytodoj.api.services.DbConnectionService;
 import com.harlownk.easytodoj.api.services.TaskService;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.vaadin.flow.server.frontend.TaskCreatePackageJson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -22,12 +23,11 @@ public class TaskController {
 
     private AuthService authService;
     private TaskService taskService;
-    private Connection dbConnection;
 
     @Autowired
     public TaskController(AuthService authService, DbConnectionService connectionService) throws SQLException {
         this.authService = authService;
-        this.dbConnection = connectionService.getConnection();
+        this.taskService = new TaskService(connectionService);
     }
 
     public static final String USER_HEADER_KEY = "ETJ_Username";
@@ -62,8 +62,14 @@ public class TaskController {
         return ResponseEntity.ok().body(result);
     }
 
+    /**
+     * Do more error checking both here and in the TaskService. TODO
+     * @param header
+     * @param body
+     * @return
+     */
     @PostMapping(value="/api/tasks/add")
-    public ResponseEntity<TaskResponse> addTask(@RequestHeader HttpHeaders header, @RequestBody TaskRequest body) throws SQLException {
+    public ResponseEntity<TaskResponse> addTask(@RequestHeader HttpHeaders header, @RequestBody TaskRequest body) {
         TaskResponse response = new TaskResponse();
         // Get authentication from header.
         String authValue = header.getFirst("Authorization");
@@ -94,24 +100,30 @@ public class TaskController {
             response.setMessage("Auth token doesn't contain the appropriate/neccessary claims.");
             return ResponseEntity.status(400).body(response);
         }
-
-        int uid = (int) claims.getClaim("userId");
-        String username = (String) claims.getClaim("username");
-
-        long dateTime = taskToAdd.getTimeDue();
-        Date date = new Date(dateTime);
+        long uid = (long) claims.getClaim("userId");
 
         // Add to the database after getting information required to do so from the request.
         // Replying with errors if the data needed isn't in the request.
-        boolean successfullyAdded = taskService.addTask(taskToAdd, uid);
+        int resultTid;
+        try {
+            resultTid = taskService.addTask(taskToAdd, uid);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            response.setMessage("Error adding task to the database.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+        if (resultTid == -1) {
+            response.setMessage("Error after trying to add task to the database.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
 
         // With success adding the task to the
         Task responseTask = new Task();
-        responseTask.setTimeCreated(new Date().getTime() / 1000);
-        responseTask.setTimeDue(dateTime);
+        responseTask.setTimeCreated(new Date().getTime());
+        responseTask.setTimeDue(taskToAdd.getTimeDue() );
         responseTask.setTaskDescription(taskToAdd.getTaskDescription());
         responseTask.setCompleted(responseTask.getCompleted());
-        responseTask.setTaskId(1); // ID From the database.
+        responseTask.setTaskId(resultTid); // ID From the database.
 
         response.setTask(responseTask);
 
