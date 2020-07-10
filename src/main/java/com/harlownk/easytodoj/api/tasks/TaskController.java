@@ -5,7 +5,6 @@ import com.harlownk.easytodoj.api.services.AuthService;
 import com.harlownk.easytodoj.api.services.DbConnectionService;
 import com.harlownk.easytodoj.api.services.TaskService;
 import com.nimbusds.jwt.JWTClaimsSet;
-import com.vaadin.flow.server.frontend.TaskCreatePackageJson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -30,36 +29,29 @@ public class TaskController {
         this.taskService = new TaskService(connectionService);
     }
 
-    public static final String USER_HEADER_KEY = "ETJ_Username";
-    public static final String USER_AUTH_HEADER_KEY = "ETJ_User_Auth";
-
-    @GetMapping("/api/tasks")
-    public ResponseEntity<List<TaskResponse>> getUserTasks(@RequestHeader HttpHeaders header) {
-        // Authenticate the user's request.
-        String userId = header.getFirst(USER_HEADER_KEY);
-        userId = "Hello ";
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+    @GetMapping("/api/tasks/all")
+    public ResponseEntity<TaskListResponse> getUserTasks(@RequestHeader HttpHeaders header) {
+        TaskListResponse response = new TaskListResponse();
+        if (!authService.getAndAuthenticateToken(header, response)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
-        String userAuthKey = header.getFirst(USER_AUTH_HEADER_KEY);
-        userAuthKey = "World!";
-        if (userAuthKey == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        JWTClaimsSet claims = authService.getClaimsFromAuthToken(header);
+        if (claims == null) {
+            response.setMessage("Auth token doesn't contain the appropriate/neccessary claims.");
+            return ResponseEntity.status(400).body(response);
         }
-
-
-        List<TaskResponse> result = new ArrayList<>();
-        TaskResponse res = new TaskResponse();
-        res.setUserId("harlow");
-        Task task = new Task();
-        task.setCompleted(false);
-        task.setTimeCreated((new Date().getTime()) / 1000);
-        task.setTaskId(1);
-        res.setTask(task);
-        result.add(res);
-        result.add(res);
-        result.add(res);
-        return ResponseEntity.ok().body(result);
+        long uid = (long) claims.getClaim("userId");
+        List<Task> taskList = null;
+        try {
+             taskList = taskService.getTasksByUserId(uid);
+        } catch (SQLException e) {
+            response.setMessage("Error finding tasks in the database.");
+            return ResponseEntity.status(500).body(response);
+        }
+        response.setMessage("Retrieved all tasks.");
+        response.setTaskList(taskList);
+        response.setUserId(uid);
+        return ResponseEntity.ok().body(response);
     }
 
     /**
@@ -71,22 +63,9 @@ public class TaskController {
     @PostMapping(value="/api/tasks/add")
     public ResponseEntity<TaskResponse> addTask(@RequestHeader HttpHeaders header, @RequestBody TaskRequest body) {
         TaskResponse response = new TaskResponse();
-        // Get authentication from header.
-        String authValue = header.getFirst("Authorization");
-        if (authValue == null) {
-            response.setMessage("Authorization Header missing.");
+        if (!authService.getAndAuthenticateToken(header, response)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
-        if (!"Bearer".equalsIgnoreCase(authService.getAuthType(authValue))) {
-            response.setMessage("Improper Authorization type. Must be type 'Bearer' with a valid authToken provided from /api/auth.");
-        }
-        String userAuthToken = authService.getAuthCreds(authValue);
-        // Authenticate the users token, checking for validity.
-        if (!authService.verifyToken(userAuthToken)) {
-            response.setMessage("Invalid/Expired token. Request a new token through the endpoint /api/auth/ or register through /api/auth/new");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        } // We are authenticated, now we can perform the work of adding the task under the user.
-
         // Get the information needed to add a task.
         // Task info from body.
         Task taskToAdd = body.getTask();
@@ -95,7 +74,7 @@ public class TaskController {
             return ResponseEntity.ok(response);
         }
         // User information.
-        JWTClaimsSet claims = authService.getClaimsFromAuthToken(userAuthToken);
+        JWTClaimsSet claims = authService.getClaimsFromAuthToken(header);
         if (claims == null) {
             response.setMessage("Auth token doesn't contain the appropriate/neccessary claims.");
             return ResponseEntity.status(400).body(response);
@@ -140,4 +119,6 @@ public class TaskController {
     public ResponseEntity updateTask(@RequestHeader HttpHeaders header, @RequestBody TaskRequest body) {
         return null;
     }
+
+
 }

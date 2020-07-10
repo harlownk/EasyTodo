@@ -4,6 +4,8 @@ import com.harlownk.easytodoj.api.tasks.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TaskService {
 
@@ -39,6 +41,26 @@ public class TaskService {
         set.close();
         statement.close();
         return resultTid;
+    }
+
+    public List<Task> getTasksByUserId(long userId) throws SQLException {
+        List<Task> taskList = new ArrayList<>();
+        PreparedStatement statement = dbConnection.prepareStatement("SELECT * FROM public.tasks WHERE user_id = ?");
+        statement.setLong(1, userId);
+        statement.execute();
+        ResultSet set = statement.getResultSet();
+        while (set.next()) {
+            Task currTask = new Task();
+            currTask.setTaskId(set.getLong("tid"));
+            currTask.setTaskDescription(set.getString("task_desc"));
+            currTask.setCompleted(set.getBoolean("completed"));
+            currTask.setTimeDue(set.getDate("due_date").getTime());
+            currTask.setTimeCreated(set.getDate("create_date").getTime());
+            taskList.add(currTask);
+        }
+        set.close();
+        statement.close();
+        return taskList;
     }
 
 }

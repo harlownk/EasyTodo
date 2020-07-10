@@ -1,5 +1,6 @@
 package com.harlownk.easytodoj.api.services;
 
+import com.harlownk.easytodoj.api.auth.MessageCarriable;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -8,6 +9,8 @@ import com.nimbusds.jwt.SignedJWT;
 import org.postgresql.util.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 
+
+import org.springframework.http.HttpHeaders;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.sql.Statement;
@@ -222,8 +225,34 @@ public class AuthService {
         return true;
     }
 
-    public JWTClaimsSet getClaimsFromAuthToken(String authToken) {
+    public boolean getAndAuthenticateToken(HttpHeaders header, MessageCarriable response) {
+        String authValue = header.getFirst("Authorization");
+        if (authValue == null) {
+            response.setMessage("Authorization Header missing.");
+            return false;
+        }
+        if (!"Bearer".equalsIgnoreCase(getAuthType(authValue))) {
+            response.setMessage("Improper Authorization type. Must be type 'Bearer' with a valid authToken provided from /api/auth.");
+            return false;
+        }
+        String userAuthToken = getAuthCreds(authValue);
+        // Authenticate the users token, checking for validity.
+        if (!verifyToken(userAuthToken)) {
+            response.setMessage("Invalid/Expired token. Request a new token through the endpoint /api/auth/ or register through /api/auth/new");
+            return false;
+        } // We are authenticated, now we can perform the work of adding the task under the user.
+        return true;
+    }
+
+    public JWTClaimsSet getClaimsFromAuthToken(HttpHeaders header) {
         try {
+            String authValue = header.getFirst("Authorization");
+            String authToken;
+            if (authValue != null) {
+                authToken = getAuthCreds(authValue);
+            } else {
+                return null;
+            }
             SignedJWT signedJWT = SignedJWT.parse(authToken);
             JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
             return claims;
