@@ -41,7 +41,7 @@ public class TaskController {
             return ResponseEntity.status(400).body(response);
         }
         long uid = (long) claims.getClaim("userId");
-        List<Task> taskList = null;
+        List<Task> taskList;
         try {
              taskList = taskService.getTasksByUserId(uid);
         } catch (SQLException e) {
@@ -60,7 +60,7 @@ public class TaskController {
      * @param body
      * @return
      */
-    @PostMapping(value="/api/tasks/add")
+    @PostMapping("/api/tasks/add")
     public ResponseEntity<TaskResponse> addTask(@RequestHeader HttpHeaders header, @RequestBody TaskRequest body) {
         TaskResponse response = new TaskResponse();
         if (!authService.getAndAuthenticateToken(header, response)) {
