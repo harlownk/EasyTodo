@@ -18,14 +18,11 @@ public class TaskService {
 
     public int addTask(Task task, long userId) throws SQLException {
         java.util.Date now = new java.util.Date();
+        java.util.Date due = new java.util.Date(task.getTimeDue());
+
         java.sql.Date currDateSql = new java.sql.Date(now.getTime());
-        java.util.Date due;
-        if (task.getTimeDue() != 0) {
-            due = new java.util.Date(task.getTimeDue());
-        } else {
-            due = new java.util.Date();
-        }
         java.sql.Date dueDateSql = new java.sql.Date(due.getTime());
+
         PreparedStatement statement = dbConnection.prepareStatement("INSERT INTO public.tasks(tid, task_desc, completed, create_date, due_date, user_id) VALUES (DEFAULT, ?, ?, ?, ?, ?) RETURNING tid");
         statement.setString(1, task.getTaskDescription());
         statement.setBoolean(2, task.getCompleted());
@@ -41,6 +38,44 @@ public class TaskService {
         set.close();
         statement.close();
         return resultTid;
+    }
+
+    public Task removeTask(long taskId, long userId) throws SQLException {
+        Task result = new Task();
+        // Begin a transaction in case there is an error in the deleting such as deleting more than one row.
+        Statement transactionStatement = dbConnection.createStatement();
+        transactionStatement.execute("BEGIN TRANSACTION");
+
+        PreparedStatement statement = dbConnection.prepareStatement("DELETE FROM public.tasks WHERE tid = ? AND user_id = ? RETURNING *");
+        statement.setLong(1, taskId);
+        statement.setLong(2, userId);
+        statement.execute();
+        ResultSet set = statement.getResultSet();
+        if (!set.next()) {  // if it didn't delete anything, that is fine: return an empty task (A task with all fields nulled).
+            transactionStatement.execute("COMMIT");
+            set.close();
+            statement.close();
+            return result;
+        }
+
+        result.setTaskId(set.getLong("tid"));
+        result.setCompleted(set.getBoolean("completed"));
+        result.setTaskDescription(set.getString("task_desc"));
+        result.setTimeCreated(set.getDate("create_date").getTime());
+        result.setTimeDue(set.getDate("due_date").getTime());
+
+        // Clean up and return result.
+        // Check if multiple rows returned from the delete query.
+        if (set.next()) {  // I don't really know how to guarantee this will never happen, but since tid is a primary key it shouldn't
+            transactionStatement.execute("ROLLBACK");
+            set.close();
+            statement.close();
+            throw new IllegalStateException("Multiple rows found when selecting with primary key.");
+        }
+        transactionStatement.execute("COMMIT");
+        set.close();
+        statement.close();
+        return result;
     }
 
     public List<Task> getTasksByUserId(long userId) throws SQLException {

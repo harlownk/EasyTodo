@@ -1,9 +1,10 @@
 package com.harlownk.easytodoj.api.tasks;
 
-import com.harlownk.easytodoj.api.auth.MessageCarriable;
 import com.harlownk.easytodoj.api.services.AuthService;
 import com.harlownk.easytodoj.api.services.DbConnectionService;
 import com.harlownk.easytodoj.api.services.TaskService;
+import com.harlownk.easytodoj.api.tasks.requests.TaskAddRequest;
+import com.harlownk.easytodoj.api.tasks.requests.TaskRemoveRequest;
 import com.nimbusds.jwt.JWTClaimsSet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -11,9 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 
@@ -61,7 +61,7 @@ public class TaskController {
      * @return
      */
     @PostMapping("/api/tasks/add")
-    public ResponseEntity<TaskResponse> addTask(@RequestHeader HttpHeaders header, @RequestBody TaskRequest body) {
+    public ResponseEntity<TaskResponse> addTask(@RequestHeader HttpHeaders header, @RequestBody TaskAddRequest body) {
         TaskResponse response = new TaskResponse();
         if (!authService.getAndAuthenticateToken(header, response)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
@@ -111,12 +111,44 @@ public class TaskController {
     }
 
     @PostMapping("/api/tasks/remove")
-    public ResponseEntity removeTask(@RequestHeader HttpHeaders header, @RequestBody TaskRequest body) {
-        return null;
+    public ResponseEntity<TaskResponse> removeTask(@RequestHeader HttpHeaders header, @RequestBody TaskRemoveRequest body) throws ParseException {
+        TaskResponse response = new TaskResponse();
+        if (!authService.getAndAuthenticateToken(header, response)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        // Get the information needed to add a task. In this case the task id.
+        int tid = body.getTaskId();
+        if (tid == 0) {
+            response.setMessage("No Task id provided.");
+            // TODO Decide the response code.
+            return ResponseEntity.ok(response);
+        }
+        // Get the user id from the JWT Claims.
+        JWTClaimsSet claims = authService.getClaimsFromAuthToken(header);
+        if (claims == null) {
+            response.setMessage("Given JWT couldn't find the needed claims.");
+            return ResponseEntity.status(500).body(response);
+        }
+        long uid = claims.getLongClaim("userId");
+        Task taskResult;
+        try {
+            taskResult = taskService.removeTask(tid, uid);
+        } catch (SQLException e) {
+            response.setMessage("Error removing task from the database.");
+            return ResponseEntity.status(500).body(response);
+        }
+        if (taskResult.getTaskId() == 0) {
+            response.setMessage("Task not reflected in the database.");
+        } else {
+            response.setMessage("Task removed successfully.");
+        }
+        response.setTask(taskResult);
+        response.setUserId(uid);
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/api/tasks/update")
-    public ResponseEntity updateTask(@RequestHeader HttpHeaders header, @RequestBody TaskRequest body) {
+    public ResponseEntity updateTask(@RequestHeader HttpHeaders header, @RequestBody TaskAddRequest body) {
         return null;
     }
 
