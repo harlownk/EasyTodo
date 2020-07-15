@@ -5,6 +5,7 @@ import com.harlownk.easytodoj.api.services.DbConnectionService;
 import com.harlownk.easytodoj.api.services.TaskService;
 import com.harlownk.easytodoj.api.tasks.requests.TaskAddRequest;
 import com.harlownk.easytodoj.api.tasks.requests.TaskRemoveRequest;
+import com.harlownk.easytodoj.api.tasks.requests.TaskUpdateRequest;
 import com.nimbusds.jwt.JWTClaimsSet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -148,8 +149,42 @@ public class TaskController {
     }
 
     @PutMapping("/api/tasks/update")
-    public ResponseEntity updateTask(@RequestHeader HttpHeaders header, @RequestBody TaskAddRequest body) {
-        return null;
+    public ResponseEntity<TaskResponse> updateTask(@RequestHeader HttpHeaders header, @RequestBody TaskAddRequest body) {
+        TaskResponse response = new TaskResponse();
+        if (!authService.getAndAuthenticateToken(header, response)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+        // Get the information needed to add a task.
+        // Task info from body.
+        Task task = body.getTask();
+        if (task == null) {
+            response.setMessage("No Task provided.");
+            return ResponseEntity.ok(response);
+        }
+        // User information.
+        JWTClaimsSet claims = authService.getClaimsFromAuthToken(header);
+        if (claims == null) {
+            response.setMessage("Auth token doesn't contain the appropriate/neccessary claims.");
+            return ResponseEntity.status(400).body(response);
+        }
+        long uid = (long) claims.getClaim("userId");
+        boolean updated;
+        try {
+            updated = taskService.updateTask(task, uid);
+        } catch (SQLException e) {
+            response.setMessage("Database error occurred when attempting");
+            return ResponseEntity.status(500).body(response);
+        }
+        if (updated) {
+            response.setMessage("Task successfully updated");
+            response.setUserId(uid);
+            return ResponseEntity.ok(response);
+        } else {
+            response.setMessage("Unable to update task.");
+            return ResponseEntity.status(500).body(response);
+        }
+
+
     }
 
 

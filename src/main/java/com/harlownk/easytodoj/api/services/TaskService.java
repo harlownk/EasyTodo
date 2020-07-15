@@ -40,6 +40,26 @@ public class TaskService {
         return resultTid;
     }
 
+    public boolean updateTask(Task task, long userId) throws SQLException {
+        PreparedStatement statement = dbConnection.prepareStatement("UPDATE public.tasks SET completed = ?, create_date = ?, due_date = ?, task_desc = ? WHERE tid = ? AND user_id = ? RETURNING *");
+        statement.setBoolean(1, task.getCompleted());
+        statement.setDate(2, new java.sql.Date(task.getTimeCreated()));
+        statement.setDate(3, new java.sql.Date(task.getTimeDue()));
+        statement.setString(4, task.getTaskDescription());
+        statement.setLong(5, task.getTaskId());
+        statement.setLong(6, userId);
+        statement.execute();
+        ResultSet set = statement.getResultSet();
+        if (!set.next()) {
+            set.close();
+            statement.close();
+            return false;
+        }
+        set.close();
+        statement.close();
+        return true;
+    }
+
     public Task removeTask(long taskId, long userId) throws SQLException {
         Task result = new Task();
         // Begin a transaction in case there is an error in the deleting such as deleting more than one row.
