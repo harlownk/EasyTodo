@@ -35,7 +35,7 @@ public class AuthService {
     private static final int SALT_LENGTH = 16;
     private static final int HASH_LENGTH_BITS = 64 * 8;
     private static final int HASH_GEN_STRENGTH = 65536;
-    private static final String SECRET_LOCATION = "static/secrets/secrets.properties";
+    private static final String SECRET_LOCATION = "secrets/secrets.properties";
 
     private static final int TOKEN_EXPR_TIME = 60 * 60 * 1000;  // One Hour = 60 * 60 * 1000.
 

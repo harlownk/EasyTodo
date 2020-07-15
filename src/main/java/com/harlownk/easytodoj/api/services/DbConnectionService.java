@@ -10,7 +10,7 @@ import java.util.Properties;
 
 public class DbConnectionService {
 
-    public static final String dbPropertiesLocation = "static/secrets/database.properties";
+    public static final String dbPropertiesLocation = "secrets/database.properties";
 
     private String connectionUrl;
     private String username;
