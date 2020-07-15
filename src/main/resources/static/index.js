@@ -23,7 +23,7 @@
         let result = await fetch(API_URL + "/api/auth/new", {
             method: "POST",
             headers: {
-                Authorization: ("Basic " + btoa(USERNAME + ":" + PASSWORD))
+                'Authorization': ("Basic " + btoa(USERNAME + ":" + PASSWORD))
             }
         }).then(data => data.text())
     .then(JSON.parse);
@@ -34,7 +34,7 @@
         let result = await fetch(API_URL + "/api/auth", {
             method: "POST",
             headers: {
-                Authorization: ("Basic " + btoa(USERNAME + ":" + PASSWORD))
+                'Authorization': ("Basic " + btoa(USERNAME + ":" + PASSWORD))
             }
         }).then(data => data.text()).then(JSON.parse);
         currToken = result.authToken;
@@ -45,7 +45,7 @@
         let result = await fetch(API_URL + "/api/auth/delete", {
             method: "POST",
             headers: {
-                Authorization: ("Basic " + btoa(USERNAME + ":" + PASSWORD))
+                'Authorization': ("Basic " + btoa(USERNAME + ":" + PASSWORD))
             }
         }).then(data => data.text())
     .then(JSON.parse);
