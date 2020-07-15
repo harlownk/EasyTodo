@@ -1,9 +1,11 @@
 package com.harlownk.easytodoj.api.tasks;
 
-public class TaskResponse {
+import com.harlownk.easytodoj.api.auth.MessageCarriable;
+
+public class TaskResponse implements MessageCarriable {
 
     private String message;
-    private String userId;
+    private long userId;
     private Task task;
 
     public String getMessage() {
@@ -14,11 +16,11 @@ public class TaskResponse {
         this.message = message;
     }
 
-    public String getUserId() {
+    public long getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(long userId) {
         this.userId = userId;
     }
 

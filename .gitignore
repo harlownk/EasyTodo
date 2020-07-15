@@ -32,7 +32,7 @@ build/
 .vscode/
 
 ### Secrets in Resources ###
-src/main/resources/static/secrets/*
+src/main/resources/secrets/*
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/maven,java

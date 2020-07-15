@@ -1,6 +1,8 @@
-package com.harlownk.easytodoj.api.tasks;
+package com.harlownk.easytodoj.api.tasks.requests;
 
-public class TaskRequest {
+import com.harlownk.easytodoj.api.tasks.Task;
+
+public class TaskAddRequest {
 
     private Task task;
 

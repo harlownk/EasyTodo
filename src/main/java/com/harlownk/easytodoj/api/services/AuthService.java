@@ -1,5 +1,6 @@
 package com.harlownk.easytodoj.api.services;
 
+import com.harlownk.easytodoj.api.auth.MessageCarriable;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
@@ -8,6 +9,8 @@ import com.nimbusds.jwt.SignedJWT;
 import org.postgresql.util.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 
+
+import org.springframework.http.HttpHeaders;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.sql.Statement;
@@ -32,7 +35,7 @@ public class AuthService {
     private static final int SALT_LENGTH = 16;
     private static final int HASH_LENGTH_BITS = 64 * 8;
     private static final int HASH_GEN_STRENGTH = 65536;
-    private static final String SECRET_LOCATION = "static/secrets/secrets.properties";
+    private static final String SECRET_LOCATION = "secrets/secrets.properties";
 
     private static final int TOKEN_EXPR_TIME = 60 * 60 * 1000;  // One Hour = 60 * 60 * 1000.
 
@@ -202,7 +205,7 @@ public class AuthService {
      * @param jwtTokenString
      * @return
      */
-    public boolean verifyToken(String jwtTokenString, String username) {
+    public boolean verifyToken(String jwtTokenString) {
         try {
             SignedJWT signedJWT = SignedJWT.parse(jwtTokenString);
             JWSVerifier verifier = new MACVerifier(signingSecret);
@@ -212,10 +215,6 @@ public class AuthService {
 
             JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
 
-            if (!username.equals(claims.getClaim("username"))) {
-                return false;
-            }
-
             Date expiration = claims.getExpirationTime();
             if (expiration.before(new Date())) {
                 return false;
@@ -224,6 +223,42 @@ public class AuthService {
             return false;
         }
         return true;
+    }
+
+    public boolean getAndAuthenticateToken(HttpHeaders header, MessageCarriable response) {
+        String authValue = header.getFirst("Authorization");
+        if (authValue == null) {
+            response.setMessage("Authorization Header missing.");
+            return false;
+        }
+        if (!"Bearer".equalsIgnoreCase(getAuthType(authValue))) {
+            response.setMessage("Improper Authorization type. Must be type 'Bearer' with a valid authToken provided from /api/auth.");
+            return false;
+        }
+        String userAuthToken = getAuthCreds(authValue);
+        // Authenticate the users token, checking for validity.
+        if (!verifyToken(userAuthToken)) {
+            response.setMessage("Invalid/Expired token. Request a new token through the endpoint /api/auth/ or register through /api/auth/new");
+            return false;
+        } // We are authenticated, now we can perform the work of adding the task under the user.
+        return true;
+    }
+
+    public JWTClaimsSet getClaimsFromAuthToken(HttpHeaders header) {
+        try {
+            String authValue = header.getFirst("Authorization");
+            String authToken;
+            if (authValue != null) {
+                authToken = getAuthCreds(authValue);
+            } else {
+                return null;
+            }
+            SignedJWT signedJWT = SignedJWT.parse(authToken);
+            JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
+            return claims;
+        } catch (ParseException e) {
+            return null;
+        }
     }
 
     /**

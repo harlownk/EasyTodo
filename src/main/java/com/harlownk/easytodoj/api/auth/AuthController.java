@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,7 +34,7 @@ public class AuthController {
         // Parse the header to get to the username and password.
         Credentials creds = getCredentialsFromAuthValue(header, response);
         if (creds == null) {
-            return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).body(response);
+            return ResponseEntity.status(409).body(response);
         }
         String username = creds.username;
         String password = creds.password;

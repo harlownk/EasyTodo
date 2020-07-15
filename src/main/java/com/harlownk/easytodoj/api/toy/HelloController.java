@@ -17,7 +17,7 @@ public class HelloController {
         return builder.toString();
     }
 
-    @RequestMapping("/jsonapi")
+    @PostMapping("/jsonapi")
     public TestObject sayJson() {
         return new TestObject("one", "two");
     }
