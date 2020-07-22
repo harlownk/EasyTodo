@@ -77,3 +77,5 @@ buildNumber.properties
 .mvn/wrapper/maven-wrapper.jar
 
 # End of https://www.toptal.com/developers/gitignore/api/maven,java
+/loclahostcert.p7b
+/src/main/resources/keystore/keystore.p12
