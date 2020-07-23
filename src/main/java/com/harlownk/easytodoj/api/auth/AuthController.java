@@ -49,7 +49,7 @@ public class AuthController {
                 return ResponseEntity.ok().body(response);
             } else {
                 response.setMessage("Credentials Invalid.");
-                return ResponseEntity.ok().body(response);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
         } catch (SQLException e) {
             response.setMessage("Database Error: " + e.getMessage());
