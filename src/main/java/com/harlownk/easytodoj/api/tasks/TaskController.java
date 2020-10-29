@@ -178,6 +178,7 @@ public class TaskController {
         if (updated) {
             response.setMessage("Task successfully updated");
             response.setUserId(uid);
+            response.setTask(task);
             return ResponseEntity.ok(response);
         } else {
             response.setMessage("Unable to update task.");
