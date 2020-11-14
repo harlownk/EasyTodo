@@ -51,7 +51,7 @@
       "webpack-merge": "4.2.2",
       "webpack-dev-server": "3.10.3"
     },
-    "hash": "8ee3fa969b6cd428d2cbc188956a9adcc8b75c36d8b968c73ff903f8e3f0b0f0"
+    "hash": "d0fe4182cbf69a5a5132938fd74db422b2c0f5c1e71ca711055edd0d1777c787"
   },
   "dependencies": {
     "@polymer/iron-icon": "3.0.1",
@@ -99,7 +99,7 @@
     "webpack": "4.42.0",
     "webpack-babel-multi-target-plugin": "2.3.3",
     "webpack-cli": "3.3.11",
-    "webpack-dev-server": "3.10.3",
+    "webpack-dev-server": "^3.11.0",
     "webpack-merge": "4.2.2"
   }
 }
