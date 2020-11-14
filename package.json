@@ -51,7 +51,7 @@
       "webpack-merge": "4.2.2",
       "webpack-dev-server": "3.10.3"
     },
-    "hash": "d0fe4182cbf69a5a5132938fd74db422b2c0f5c1e71ca711055edd0d1777c787"
+    "hash": "2c02ea0b10b04152d7a599504df81752201f979112401fc52a3d2de9ffcff00a"
   },
   "dependencies": {
     "@polymer/iron-icon": "3.0.1",
@@ -92,7 +92,7 @@
   },
   "devDependencies": {
     "chokidar": "^3.4.3",
-    "compression-webpack-plugin": "3.1.0",
+    "compression-webpack-plugin": "^6.1.1",
     "copy-webpack-plugin": "5.1.1",
     "raw-loader": "3.1.0",
     "terser": "4.6.7",
